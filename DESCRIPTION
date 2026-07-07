@@ -1,6 +1,6 @@
 Package: RConfig
 Title: Personal Shared R Utility Functions
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: person("Maggie", "Clevenger", email = "mhclev27@gmail.com", role = c("aut", "cre"))
 Description: Personal collection of shared utility functions (path handling,
     data-frame QC, plotting/saving helpers, print/preview helpers, and
@@ -18,4 +18,7 @@ Depends:
 Imports:
     lintr,
     styler,
-    tools
+    tools,
+    grDevices,
+    stats,
+    utils

@@ -179,10 +179,10 @@ NotIn = function(x,y){
 }
 
 
-#' Negated %in%
-#'
-#' @param x,table As in `base::%in%`, but returns TRUE where x is NOT in table.
+# Negated %in% (no formal Rd page: roxygen2 can't cleanly document operators
+# containing "!" — see checking Rd files warning in R CMD check).
 #' @export
+#' @noRd
 
 `%!in%` = Negate(`%in%`)
 
