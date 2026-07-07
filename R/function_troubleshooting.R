@@ -53,7 +53,8 @@ debug_inputs = function(fn, ...) {
   for (nm in names(fn_formals)) {
     if (!nm %in% names(supplied)) {
       default_expr = fn_formals[[nm]]
-      if (!identical(default_expr, quote(expr = ))) {
+      has_default  = !(is.symbol(default_expr) && identical(as.character(default_expr), ""))
+      if (has_default) {
         assign(nm, eval(default_expr, envir = resolve_env), envir = resolve_env)
       }
     }
