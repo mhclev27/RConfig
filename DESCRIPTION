@@ -1,0 +1,21 @@
+Package: RConfig
+Title: Personal Shared R Utility Functions
+Version: 0.1.0
+Authors@R: person("Maggie", "Clevenger", email = "mhclev27@gmail.com", role = c("aut", "cre"))
+Description: Personal collection of shared utility functions (path handling,
+    data-frame QC, plotting/saving helpers, print/preview helpers, and
+    lint/style wrappers) reused across analysis projects.
+License: GPL-3
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Depends:
+    R (>= 4.0),
+    dplyr,
+    purrr,
+    ggplot2,
+    glue
+Imports:
+    lintr,
+    styler,
+    tools
