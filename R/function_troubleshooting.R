@@ -50,14 +50,27 @@ debug_inputs = function(fn, ...) {
   }
 
   fn_formals = formals(fn)
+  unbound = character(0)
+
   for (nm in names(fn_formals)) {
     if (!nm %in% names(supplied)) {
       default_expr = fn_formals[[nm]]
-      has_default  = !(is.symbol(default_expr) && identical(as.character(default_expr), ""))
-      if (has_default) {
-        assign(nm, eval(default_expr, envir = resolve_env), envir = resolve_env)
-      }
+      ok = tryCatch(
+        {
+          assign(nm, eval(default_expr, envir = resolve_env), envir = resolve_env)
+          TRUE
+        },
+        error = function(e) FALSE
+      )
+      if (!ok) unbound = c(unbound, nm)
     }
+  }
+
+  if (length(unbound) > 0) {
+    message(
+      "debug_inputs(): left unbound (required, no default, not supplied): ",
+      paste(unbound, collapse = ", ")
+    )
   }
 
   resolved = as.list(resolve_env)
