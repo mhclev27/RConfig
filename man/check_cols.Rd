@@ -24,7 +24,7 @@ check_cols(
 \item{return_subset}{If TRUE, returns \code{df[, cols]} instead of the full \code{df}.}
 }
 \value{
-\code{df} (or a column subset of it) if all \code{cols} are present; otherwise errors.
+\code{invisible(TRUE)} if all \code{cols} are present, or a returns \code{df[, cols]} if \code{return_subset}; otherwise errors.
 }
 \description{
 Stops with an informative error if any of \code{cols} are missing from \code{df}.

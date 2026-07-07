@@ -11,7 +11,7 @@
 #' @param df_name Label used in the error message. Defaults to the name of `df`.
 #' @param message Optional custom prefix for the error message.
 #' @param return_subset If TRUE, returns `df[, cols]` instead of the full `df`.
-#' @return `df` (or a column subset of it) if all `cols` are present; otherwise errors.
+#' @return `invisible(TRUE)` if all `cols` are present, or a returns `df[, cols]` if `return_subset`; otherwise errors.
 #' @export
 
 
@@ -50,7 +50,7 @@ check_cols = function(
     return(df[, cols, drop = FALSE])
   }
   
-  return(df)
+  return(invisible(TRUE))
 }
 
 
