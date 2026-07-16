@@ -187,6 +187,16 @@ NotIn = function(x,y){
 `%!in%` = Negate(`%in%`)
 
 
+# Null-coalescing operator: returns x unless it is NULL, in which case y.
+# Like %!in% above, operators with special characters get no clean Rd page.
+#' @export
+#' @noRd
+
+`%||%` = function(x, y){
+  if (is.null(x)) y else x
+}
+
+
 
 # --- MAPPING FUNCTIONS -------------------------------------------------------------------
 
