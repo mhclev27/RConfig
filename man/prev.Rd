@@ -16,5 +16,9 @@ A data frame of the previewed rows.
 }
 \description{
 Coerces \code{df} to a data.frame and returns the first \code{n} rows. Pass
-\code{n = "a"} (or "all"/"A"/"ALL"/"All"/"f") to return every row.
+\code{n = "a"} (or "all"/"A"/"ALL"/"All"/"f") to return every row. When all rows
+are requested, also raises \code{options(max.print)} if needed so the returned
+data frame's auto-print doesn't get silently truncated with an
+"omitted N rows" message -- since that print happens after this function
+already returned, this is the only point where it can be prevented.
 }

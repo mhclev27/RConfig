@@ -4,7 +4,11 @@
 #' Preview the first (or all) rows of a data frame
 #'
 #' Coerces `df` to a data.frame and returns the first `n` rows. Pass
-#' `n = "a"` (or "all"/"A"/"ALL"/"All"/"f") to return every row.
+#' `n = "a"` (or "all"/"A"/"ALL"/"All"/"f") to return every row. When all rows
+#' are requested, also raises `options(max.print)` if needed so the returned
+#' data frame's auto-print doesn't get silently truncated with an
+#' "omitted N rows" message -- since that print happens after this function
+#' already returned, this is the only point where it can be prevented.
 #'
 #' @param df Object coercible to a data frame.
 #' @param n Number of rows to preview, or "a"/"all"/"A"/"ALL"/"All"/"f" for all rows.
@@ -12,17 +16,26 @@
 #' @export
 
 prev = function(df, n=5){
-  
+
   if(n %in% c("a", "all", "A", "ALL", "All", "f")){
     n_use = nrow(df)
   } else{
     n_use = n
   }
-  
-  
-  df %>%
+
+
+  out = df %>%
     as.data.frame() %>%
     head(n_use)
+
+  if(n_use == nrow(df)){
+    needed = nrow(out) * ncol(out) + 100
+    if(getOption("max.print") < needed){
+      options(max.print = needed)
+    }
+  }
+
+  out
 }
 
 
