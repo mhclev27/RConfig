@@ -12,5 +12,10 @@ helpers, and lint/style wrappers reused across analysis projects.
 \author{
 \strong{Maintainer}: Maggie Clevenger \email{mhclev27@gmail.com}
 
+Authors:
+\itemize{
+  \item Maggie Clevenger \email{mhclev27@gmail.com}
+}
+
 }
 \keyword{internal}

@@ -1,5 +1,4 @@
 
-
 #' Get the parent directory of a path, whether it points to a file or folder
 #'
 #' Heuristic: if the last path component has a file extension, returns its
@@ -54,9 +53,10 @@ folder.path = function(...){
 #' if present. Also prints a preview of the loaded data via `prev()`.
 #'
 #' @param file Path to the CSV file.
+#' @param ... Additional arguments passed to `read.csv()`.
 #' @return The loaded data frame.
 #' @export
-read.csv2 = function(file) {
+read.csv2 = function(file, ...) {
   file = spath(file)
   # Try reading the README
   file_base = tools::file_path_sans_ext(basename(file))
@@ -70,11 +70,52 @@ read.csv2 = function(file) {
   }
   
   # Load the CSV
-  df = read.csv(file = spath(file))
+  df = read.csv(file = spath(file), ...)
   
   print(prev(df))
   
   return(df)
+}
+
+
+#' Write a CSV with a companion README
+#'
+#' Writes `x` with `write.csv()` after resolving `file` via `spath()`. When
+#' `desc` is supplied, writes it to a same-basename `*_readme.txt` companion
+#' file in the same directory, matching the file that `read.csv2()` prints on
+#' load. Parent directories are created when needed.
+#'
+#' @param x Object to write with `write.csv()`.
+#' @param file Path to the CSV file, as in `write.csv()`.
+#' @param desc Optional character vector saved as the companion README.
+#' @param ... Additional arguments passed to `write.csv()`.
+#' @return Invisibly, the resolved CSV path.
+#' @export
+write.csv2 = function(x, file = "", desc = NULL, ...) {
+  if (identical(file, "")) {
+    write.csv(x = x, file = file, ...)
+    return(invisible(file))
+  }
+  
+  path = spath(file)
+  base = dirname(path)
+  
+  if (!dir.exists(as.character(base))) {
+    print(paste0("Creating directory ", base))
+    dir.create(base, recursive = TRUE)
+  }
+  
+  printg("Saving CSV to {path}")
+  write.csv(x = x, file = path, ...)
+  
+  if (!is.null(desc)) {
+    file_base = tools::file_path_sans_ext(basename(path))
+    readme_path = file.path(base, paste0(file_base, "_readme.txt"))
+    printg("Saving README to {readme_path}")
+    writeLines(as.character(desc), con = readme_path)
+  }
+  
+  invisible(path)
 }
 
 

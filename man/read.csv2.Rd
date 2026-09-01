@@ -4,10 +4,12 @@
 \alias{read.csv2}
 \title{Read a CSV, printing an accompanying README if one exists}
 \usage{
-read.csv2(file)
+read.csv2(file, ...)
 }
 \arguments{
 \item{file}{Path to the CSV file.}
+
+\item{...}{Additional arguments passed to \code{read.csv()}.}
 }
 \value{
 The loaded data frame.
