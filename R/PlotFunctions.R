@@ -104,7 +104,7 @@ gsave = function(title,
     additional_info = ensure_dir_quiet(additional_info)
     
     if(type != ".pdf"){
-      ggsave(file.path(additional_info, paste0(title,".pdf")), 
+      ggsave(file.path(additional_info, "plot.pdf"),
              plot = plot, 
              width = w_in, 
              height = h_in, 
