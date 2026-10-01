@@ -29,6 +29,27 @@ ensure_dir_quiet = function(path) {
 }
 
 
+gsave_prepare_df_for_csv = function(df) {
+  output_df = as.df(df)
+  list_columns = vapply(output_df, is.list, logical(1))
+
+  output_df[list_columns] = lapply(
+    output_df[list_columns],
+    function(column) {
+      vapply(
+        column,
+        function(value) {
+          paste(utils::capture.output(dput(value)), collapse = " ")
+        },
+        character(1)
+      )
+    }
+  )
+
+  output_df
+}
+
+
 #' Save a ggplot with a companion PDF, RDS, source data, and README
 #'
 #' Saves `plot` to `dir` as `type` (default .jpeg), plus a companion PDF
@@ -45,6 +66,7 @@ ensure_dir_quiet = function(path) {
 #' @param folders Unused (reserved).
 #' @param additional_info Option to save plot object, dfs, description readme. Default is TRUE
 #' @param dfs Named list of data frames to save alongside the plot as CSVs.
+#'   List-column cells are serialized as readable `dput()` text before export.
 #' @param plot_bundle_object Optional complete plot-output object to save as
 #'   `plot_bundle_object.rds` inside the plot subfolder.
 #' @param overwrite Whether existing plot output may be overwritten. Defaults to
@@ -110,6 +132,26 @@ gsave = function(title,
       )
     }
   }
+
+  prepared_dfs = NULL
+  if (isTRUE(additional_info) && !is.null(dfs)) {
+    prepared_dfs = imap(
+      dfs,
+      function(df, name) {
+        tryCatch(
+          gsave_prepare_df_for_csv(df),
+          error = function(error) {
+            stop(
+              "Could not prepare dfs[['", name, "']] for CSV export: ",
+              conditionMessage(error),
+              ". Nothing was saved.",
+              call. = FALSE
+            )
+          }
+        )
+      }
+    )
+  }
   
   if (!dir.exists(as.character(dir_loc))) {
     print(paste0("Creating directory ", dir_loc))
@@ -157,9 +199,9 @@ gsave = function(title,
     cat("\nsaved!")
     
     
-    if(!is.null(dfs)){
-      imap(dfs, function(df, name){
-        write.csv(as.df(df), file = file.path(additional_info, paste0("plotDF_", name, ".csv")),
+    if(!is.null(prepared_dfs)){
+      imap(prepared_dfs, function(df, name){
+        write.csv(df, file = file.path(additional_info, paste0("plotDF_", name, ".csv")),
                   row.names = F)
       })
     }

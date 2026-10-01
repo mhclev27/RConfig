@@ -35,7 +35,8 @@ gsave(
 
 \item{folders}{Unused (reserved).}
 
-\item{dfs}{Named list of data frames to save alongside the plot as CSVs.}
+\item{dfs}{Named list of data frames to save alongside the plot as CSVs.
+List-column cells are serialized as readable \code{dput()} text before export.}
 
 \item{dpi}{Resolution for raster output.}
 
