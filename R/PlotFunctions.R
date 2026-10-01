@@ -33,8 +33,9 @@ ensure_dir_quiet = function(path) {
 #'
 #' Saves `plot` to `dir` as `type` (default .jpeg), plus a companion PDF
 #' (unless `type` is already .pdf), the plot object as an RDS, any data
-#' frames in `dfs` as CSVs, and an optional `desc` as a readme.txt — all
-#' inside a subfolder named after `title`.
+#' frames in `dfs` as CSVs, an optional `plot_bundle_object` as
+#' `plot_bundle_object.rds`, and an optional `desc` as a readme.txt — all inside
+#' a subfolder named after `title`.
 #'
 #' @param title Base filename (without extension) and subfolder name.
 #' @param plot ggplot object to save. Defaults to `last_plot()` if NULL.
@@ -44,6 +45,8 @@ ensure_dir_quiet = function(path) {
 #' @param folders Unused (reserved).
 #' @param additional_info Option to save plot object, dfs, description readme. Default is TRUE
 #' @param dfs Named list of data frames to save alongside the plot as CSVs.
+#' @param plot_bundle_object Optional complete plot-output object to save as
+#'   `plot_bundle_object.rds` inside the plot subfolder.
 #' @param dpi Resolution for raster output.
 #' @param desc Optional description saved as `readme.txt` alongside the plot.
 #' @param type File extension for the primary saved plot (default ".jpeg").
@@ -64,7 +67,15 @@ gsave = function(title,
                  additional_info = TRUE,
                  desc = NULL,
                  type = ".jpeg",
-                 units = "inches"){
+                 units = "inches",
+                 plot_bundle_object = NULL){
+
+  if (!is.null(plot_bundle_object) && !isTRUE(additional_info)) {
+    stop(
+      "plot_bundle_object requires additional_info = TRUE.",
+      call. = FALSE
+    )
+  }
   
   dir_loc = spath(dir)
   
@@ -124,16 +135,39 @@ gsave = function(title,
     }
     
     saveRDS(plot, file = file.path(additional_info, paste0("plotObject.RDS")))
+
+    if (!is.null(plot_bundle_object)) {
+      saveRDS(
+        plot_bundle_object,
+        file = file.path(additional_info, "plot_bundle_object.rds")
+      )
+    }
+
+    readme_lines = desc
+
+    if (!is.null(dfs) &&
+        (!is.null(desc) || !is.null(plot_bundle_object))) {
+      dfs_note = paste0(
+        "Associated dfs include:\n\n",
+        paste(names(dfs), collapse = "\n")
+      )
+      readme_lines = c(readme_lines, dfs_note)
+    }
+
+    if (!is.null(plot_bundle_object)) {
+      readme_lines = c(
+        readme_lines,
+        "plot_bundle_object was saved as plot_bundle_object.rds."
+      )
+    }
     
-    if (!is.null(desc)) {
-      
-      if(!is.null(dfs)){
-        desc = paste0(desc, "\n\nAssociated dfs include:\n\n", paste(names(dfs), collapse = "\n")) 
-      }
-      
+    if (length(readme_lines) > 0) {
       readme_path = file.path(additional_info, paste0("readme.txt"))
       print("saving your README")
-      writeLines(desc, con = readme_path)
+      writeLines(
+        paste(readme_lines, collapse = "\n\n"),
+        con = readme_path
+      )
     }
     
   }
