@@ -47,6 +47,9 @@ ensure_dir_quiet = function(path) {
 #' @param dfs Named list of data frames to save alongside the plot as CSVs.
 #' @param plot_bundle_object Optional complete plot-output object to save as
 #'   `plot_bundle_object.rds` inside the plot subfolder.
+#' @param overwrite Whether existing plot output may be overwritten. Defaults to
+#'   `TRUE`. When `FALSE`, `gsave()` stops before writing anything if either the
+#'   primary plot file or the plot component subfolder already exists.
 #' @param dpi Resolution for raster output.
 #' @param desc Optional description saved as `readme.txt` alongside the plot.
 #' @param type File extension for the primary saved plot (default ".jpeg").
@@ -68,7 +71,12 @@ gsave = function(title,
                  desc = NULL,
                  type = ".jpeg",
                  units = "inches",
-                 plot_bundle_object = NULL){
+                 plot_bundle_object = NULL,
+                 overwrite = TRUE){
+
+  if (!is.logical(overwrite) || length(overwrite) != 1 || is.na(overwrite)) {
+    stop("overwrite must be TRUE or FALSE.", call. = FALSE)
+  }
 
   if (!is.null(plot_bundle_object) && !isTRUE(additional_info)) {
     stop(
@@ -78,6 +86,30 @@ gsave = function(title,
   }
   
   dir_loc = spath(dir)
+  final_path = file.path(dir_loc, paste0(title, type))
+  additional_info_path = file.path(dir_loc, safe_filename(title))
+
+  if (!overwrite) {
+    existing_outputs = c(
+      if (file.exists(final_path)) final_path else character(),
+      if (isTRUE(additional_info) && dir.exists(additional_info_path)) {
+        additional_info_path
+      } else {
+        character()
+      }
+    )
+
+    if (length(existing_outputs) > 0) {
+      stop(
+        paste0(
+          "overwrite = FALSE and existing output was found: ",
+          paste(existing_outputs, collapse = "; "),
+          ". Nothing was saved."
+        ),
+        call. = FALSE
+      )
+    }
+  }
   
   if (!dir.exists(as.character(dir_loc))) {
     print(paste0("Creating directory ", dir_loc))
@@ -86,8 +118,6 @@ gsave = function(title,
   
   
 
-  final_path = file.path(dir_loc, paste0(title,type))
-  
   cat("Saving file to", final_path)
   if(is.null(plot)){plot = last_plot()}
   
@@ -111,7 +141,7 @@ gsave = function(title,
   
   # Save additional components
   if(additional_info){
-    additional_info = file.path(dir_loc, paste0(safe_filename(title)))
+    additional_info = additional_info_path
     additional_info = ensure_dir_quiet(additional_info)
     
     if(type != ".pdf"){

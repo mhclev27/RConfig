@@ -18,7 +18,8 @@ gsave(
   desc = NULL,
   type = ".jpeg",
   units = "inches",
-  plot_bundle_object = NULL
+  plot_bundle_object = NULL,
+  overwrite = TRUE
 )
 }
 \arguments{
@@ -42,12 +43,16 @@ gsave(
 
 \item{desc}{Optional description saved as \code{readme.txt} alongside the plot.}
 
-\item{plot_bundle_object}{Optional complete plot-output object to save as
-\code{plot_bundle_object.rds} inside the plot subfolder.}
-
 \item{type}{File extension for the primary saved plot (default ".jpeg").}
 
 \item{units}{Units for \code{w}/\code{h}: "px"/"pixels", or anything else treated as inches.}
+
+\item{plot_bundle_object}{Optional complete plot-output object to save as
+\code{plot_bundle_object.rds} inside the plot subfolder.}
+
+\item{overwrite}{Whether existing plot output may be overwritten. Defaults to
+\code{TRUE}. When \code{FALSE}, \code{gsave()} stops before writing anything if either the
+primary plot file or the plot component subfolder already exists.}
 }
 \value{
 Invisible; called for its side effects (files written to disk).
@@ -56,6 +61,6 @@ Invisible; called for its side effects (files written to disk).
 Saves \code{plot} to \code{dir} as \code{type} (default .jpeg), plus a companion PDF
 (unless \code{type} is already .pdf), the plot object as an RDS, any data
 frames in \code{dfs} as CSVs, an optional \code{plot_bundle_object} as
-\code{plot_bundle_object.rds}, and an optional \code{desc} as a readme.txt — all
-inside a subfolder named after \code{title}.
+\code{plot_bundle_object.rds}, and an optional \code{desc} as a readme.txt — all inside
+a subfolder named after \code{title}.
 }
