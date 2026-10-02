@@ -88,10 +88,16 @@ read.csv2 = function(file, ...) {
 #' @param x Object to write with `write.csv()`.
 #' @param file Path to the CSV file, as in `write.csv()`.
 #' @param desc Optional character vector saved as the companion README.
+#' @param overwrite Whether an existing CSV or companion README may be
+#'   overwritten. Defaults to `FALSE`.
 #' @param ... Additional arguments passed to `write.csv()`.
 #' @return Invisibly, the resolved CSV path.
 #' @export
-write.csv2 = function(x, file = "", desc = NULL, ...) {
+write.csv2 = function(x, file = "", desc = NULL, overwrite = FALSE, ...) {
+  if (!is.logical(overwrite) || length(overwrite) != 1 || is.na(overwrite)) {
+    stop("overwrite must be TRUE or FALSE.", call. = FALSE)
+  }
+
   if (identical(file, "")) {
     write.csv(x = x, file = file, ...)
     return(invisible(file))
@@ -99,6 +105,24 @@ write.csv2 = function(x, file = "", desc = NULL, ...) {
   
   path = spath(file)
   base = dirname(path)
+  file_base = tools::file_path_sans_ext(basename(path))
+  readme_path = file.path(base, paste0(file_base, "_readme.txt"))
+
+  protected_paths = path
+  if (!is.null(desc)) {
+    protected_paths = c(protected_paths, readme_path)
+  }
+
+  existing_paths = protected_paths[file.exists(protected_paths)]
+  if (!overwrite && length(existing_paths) > 0) {
+    stop(
+      paste0(
+        "overwrite = FALSE and existing output was found: ",
+        paste(existing_paths, collapse = ", ")
+      ),
+      call. = FALSE
+    )
+  }
   
   if (!dir.exists(as.character(base))) {
     print(paste0("Creating directory ", base))
@@ -109,8 +133,6 @@ write.csv2 = function(x, file = "", desc = NULL, ...) {
   write.csv(x = x, file = path, ...)
   
   if (!is.null(desc)) {
-    file_base = tools::file_path_sans_ext(basename(path))
-    readme_path = file.path(base, paste0(file_base, "_readme.txt"))
     printg("Saving README to {readme_path}")
     writeLines(as.character(desc), con = readme_path)
   }

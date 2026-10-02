@@ -4,7 +4,7 @@
 \alias{write.csv2}
 \title{Write a CSV with a companion README}
 \usage{
-write.csv2(x, file = "", desc = NULL, ...)
+write.csv2(x, file = "", desc = NULL, overwrite = FALSE, ...)
 }
 \arguments{
 \item{x}{Object to write with \code{write.csv()}.}
@@ -12,6 +12,9 @@ write.csv2(x, file = "", desc = NULL, ...)
 \item{file}{Path to the CSV file, as in \code{write.csv()}.}
 
 \item{desc}{Optional character vector saved as the companion README.}
+
+\item{overwrite}{Whether an existing CSV or companion README may be
+overwritten. Defaults to \code{FALSE}.}
 
 \item{...}{Additional arguments passed to \code{write.csv()}.}
 }
