@@ -1,6 +1,6 @@
 Package: RConfig
 Title: Personal Shared R Utility Functions
-Version: 0.3.6
+Version: 0.3.7
 Authors@R: person("Maggie", "Clevenger", email = "mhclev27@gmail.com", role = c("aut", "cre"))
 Description: Personal collection of shared utility functions (path handling,
     data-frame QC, plotting/saving helpers, print/preview helpers, and
@@ -8,7 +8,6 @@ Description: Personal collection of shared utility functions (path handling,
 License: GPL-3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
 Depends:
     R (>= 4.0),
     dplyr,
@@ -22,3 +21,7 @@ Imports:
     grDevices,
     stats,
     utils
+Suggests:
+    testthat (>= 3.0.0)
+Config/roxygen2/version: 8.0.0
+Config/testthat/edition: 3
