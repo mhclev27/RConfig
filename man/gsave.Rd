@@ -71,7 +71,15 @@ produce exists and is non-empty: the primary plot file, and with
 \code{additional_info = TRUE} the companion \code{plot.pdf}, \code{plotObject.RDS}, each
 \verb{plotDF_<name>.csv}, \code{plot_bundle_object.rds} and \code{readme.txt} when they
 apply. If any is missing it stops with an error listing each missing path
-and its character length. This catches Windows graphics devices (e.g. ragg
-PNG/JPEG), which write nothing and raise no error when the output path is
-260 characters or longer.
+and its character length.
+
+Raster output (.png, .jpeg/.jpg, .tiff/.tif, .bmp) is rendered with the
+base \code{grDevices} device using \code{type = "cairo"} rather than ggplot2's
+default (ragg when installed), because ragg writes nothing and raises no
+error on Windows when the output path is 260 characters or longer; Cairo
+handles long paths. Output pixel dimensions match the previous default
+(\code{w}/\code{h} in inches times \code{dpi}). PDF, SVG and other types are unchanged. If
+Cairo is unavailable (\code{capabilities("cairo")} is \code{FALSE}), ggplot2's
+default device is used and the existence check above reports any
+silently-missing file.
 }

@@ -69,14 +69,59 @@ gsave_check_outputs = function(paths) {
         paste(missing_lines, collapse = "
 "),
         "
-Windows graphics devices (e.g. ragg PNG/JPEG) fail silently when ",
-        "the output path is 260 characters or longer. Shorten the title or dir."
+Some Windows graphics devices (e.g. ragg PNG/JPEG, used when Cairo ",
+        "is unavailable) fail silently when the output path is 260 characters ",
+        "or longer. Shorten the title or dir."
       ),
       call. = FALSE
     )
   }
 
   invisible(paths)
+}
+
+
+gsave_raster_device = function(path) {
+  if (!isTRUE(capabilities("cairo"))) {
+    return(NULL)
+  }
+
+  extension = tolower(tools::file_ext(path))
+  device_fn = switch(
+    extension,
+    png = grDevices::png,
+    jpg = ,
+    jpeg = grDevices::jpeg,
+    tif = ,
+    tiff = grDevices::tiff,
+    bmp = grDevices::bmp,
+    NULL
+  )
+
+  if (is.null(device_fn)) {
+    return(NULL)
+  }
+
+  # ggplot2::ggsave fills `res` (dpi) and `units` ("in") for device functions
+  # that declare them, and passes width/height in inches plus bg.
+  function(filename,
+           width,
+           height,
+           res,
+           units,
+           bg = "white",
+           ...) {
+    device_fn(
+      filename = filename,
+      width = width,
+      height = height,
+      units = units,
+      res = res,
+      bg = bg,
+      type = "cairo",
+      ...
+    )
+  }
 }
 
 
@@ -111,9 +156,17 @@ Windows graphics devices (e.g. ragg PNG/JPEG) fail silently when ",
 #'   `additional_info = TRUE` the companion `plot.pdf`, `plotObject.RDS`, each
 #'   `plotDF_<name>.csv`, `plot_bundle_object.rds` and `readme.txt` when they
 #'   apply. If any is missing it stops with an error listing each missing path
-#'   and its character length. This catches Windows graphics devices (e.g. ragg
-#'   PNG/JPEG), which write nothing and raise no error when the output path is
-#'   260 characters or longer.
+#'   and its character length.
+#'
+#'   Raster output (.png, .jpeg/.jpg, .tiff/.tif, .bmp) is rendered with the
+#'   base `grDevices` device using `type = "cairo"` rather than ggplot2's
+#'   default (ragg when installed), because ragg writes nothing and raises no
+#'   error on Windows when the output path is 260 characters or longer; Cairo
+#'   handles long paths. Output pixel dimensions match the previous default
+#'   (`w`/`h` in inches times `dpi`). PDF, SVG and other types are unchanged. If
+#'   Cairo is unavailable (`capabilities("cairo")` is `FALSE`), ggplot2's
+#'   default device is used and the existence check above reports any
+#'   silently-missing file.
 #' @return Invisible; called for its side effects (files written to disk).
 #' @export
 
@@ -212,14 +265,18 @@ gsave = function(title,
   }
   
   output_paths = final_path
+  raster_device = gsave_raster_device(final_path)
 
-  ggsave(final_path, 
-         plot = plot, 
-         width = w_in, 
-         height = h_in, 
-         units = units_used, 
-         dpi = dpi,
-         limitsize = F)
+  ggsave(
+    filename = final_path,
+    plot = plot,
+    device = raster_device,
+    width = w_in,
+    height = h_in,
+    units = units_used,
+    dpi = dpi,
+    limitsize = FALSE
+  )
   
   # Save additional components
   if(additional_info){

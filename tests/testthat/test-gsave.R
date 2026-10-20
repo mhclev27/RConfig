@@ -37,6 +37,26 @@ make_test_plot = function() {
     ggplot2::geom_point()
 }
 
+png_pixel_dims = function(path) {
+  if (requireNamespace("png", quietly = TRUE)) {
+    image = png::readPNG(path)
+    return(c(width = dim(image)[2], height = dim(image)[1]))
+  }
+  header = readBin(
+    con = path,
+    what = "raw",
+    n = 24
+  )
+  ihdr_bytes = header[17:24]
+  width_bytes = ihdr_bytes[1:4]
+  height_bytes = ihdr_bytes[5:8]
+  byte_weights = 256^(3:0)
+  c(
+    width = sum(as.integer(width_bytes) * byte_weights),
+    height = sum(as.integer(height_bytes) * byte_weights)
+  )
+}
+
 test_that("gsave passes the output check on a normal save", {
   out_dir = local_test_dir()
   test_plot = make_test_plot()
@@ -71,9 +91,55 @@ test_that("gsave passes the output check on a normal save", {
   expect_true(all(file.exists(expected_paths)))
 })
 
-test_that("gsave errors when the PNG path is 260+ characters on Windows", {
+test_that("gsave PNG pixel dimensions match an explicit Cairo png device", {
+  skip_if_not(isTRUE(capabilities("cairo")))
+  out_dir = local_test_dir()
+  test_plot = make_test_plot()
+
+  suppressMessages(
+    capture.output(
+      gsave(
+        title = "dims_plot",
+        plot = test_plot,
+        dir = out_dir,
+        w = 3,
+        h = 2,
+        dfs = NULL,
+        dpi = 150,
+        additional_info = FALSE,
+        type = ".png"
+      )
+    )
+  )
+
+  reference_path = file.path(out_dir, "reference.png")
+  grDevices::png(
+    filename = reference_path,
+    width = 3,
+    height = 2,
+    units = "in",
+    res = 150,
+    type = "cairo"
+  )
+  print(test_plot)
+  grDevices::dev.off()
+
+  gsave_dims = png_pixel_dims(file.path(out_dir, "dims_plot.png"))
+  reference_dims = png_pixel_dims(reference_path)
+  expect_equal(
+    object = gsave_dims,
+    expected = reference_dims
+  )
+  expect_equal(
+    object = unname(gsave_dims),
+    expected = c(450, 300)
+  )
+})
+
+test_that("gsave writes a PNG at a 333-character path with ragg installed", {
   skip_on_os(c("mac", "linux"))
   skip_if_not_installed("ragg")
+  skip_if_not(isTRUE(capabilities("cairo")))
 
   long_dir = file.path(
     local_test_dir(),
@@ -84,12 +150,16 @@ test_that("gsave errors when the PNG path is 260+ characters on Windows", {
     path = long_dir,
     recursive = TRUE
   )
-  long_title = strrep("c", 80)
+  title_length = 333 - nchar(long_dir) - nchar("/.png")
+  long_title = strrep("c", title_length)
   png_path = file.path(long_dir, paste0(long_title, ".png"))
-  expect_gte(nchar(png_path), 260)
+  expect_equal(
+    object = nchar(png_path),
+    expected = 333
+  )
 
   test_plot = make_test_plot()
-  save_error = expect_error(
+  expect_no_error(
     suppressMessages(
       capture.output(
         gsave(
@@ -104,18 +174,16 @@ test_that("gsave errors when the PNG path is 260+ characters on Windows", {
           type = ".png"
         )
       )
-    ),
-    regexp = "missing or empty"
+    )
   )
-  expect_match(
-    object = conditionMessage(save_error),
-    regexp = png_path,
-    fixed = TRUE
+  expect_true(file.exists(png_path))
+  expect_gt(
+    object = file.size(png_path),
+    expected = 0
   )
-  expect_match(
-    object = conditionMessage(save_error),
-    regexp = paste0("(", nchar(png_path), " characters)"),
-    fixed = TRUE
+  expect_equal(
+    object = unname(png_pixel_dims(png_path)),
+    expected = c(144, 144)
   )
 })
 
