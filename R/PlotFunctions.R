@@ -50,6 +50,36 @@ gsave_prepare_df_for_csv = function(df) {
 }
 
 
+gsave_check_outputs = function(paths) {
+  output_sizes = file.size(paths)
+  missing_paths = paths[is.na(output_sizes) | output_sizes == 0]
+
+  if (length(missing_paths) > 0) {
+    missing_lines = paste0(
+      "  - ",
+      missing_paths,
+      " (",
+      nchar(missing_paths),
+      " characters)"
+    )
+    stop(
+      paste0(
+        "gsave() finished but these expected outputs are missing or empty:
+",
+        paste(missing_lines, collapse = "
+"),
+        "
+Windows graphics devices (e.g. ragg PNG/JPEG) fail silently when ",
+        "the output path is 260 characters or longer. Shorten the title or dir."
+      ),
+      call. = FALSE
+    )
+  }
+
+  invisible(paths)
+}
+
+
 #' Save a ggplot with a companion PDF, RDS, source data, and README
 #'
 #' Saves `plot` to `dir` as `type` (default .jpeg), plus a companion PDF
@@ -76,6 +106,14 @@ gsave_prepare_df_for_csv = function(df) {
 #' @param desc Optional description saved as `readme.txt` alongside the plot.
 #' @param type File extension for the primary saved plot (default ".jpeg").
 #' @param units Units for `w`/`h`: "px"/"pixels", or anything else treated as inches.
+#' @details After writing, `gsave()` verifies that every file it was asked to
+#'   produce exists and is non-empty: the primary plot file, and with
+#'   `additional_info = TRUE` the companion `plot.pdf`, `plotObject.RDS`, each
+#'   `plotDF_<name>.csv`, `plot_bundle_object.rds` and `readme.txt` when they
+#'   apply. If any is missing it stops with an error listing each missing path
+#'   and its character length. This catches Windows graphics devices (e.g. ragg
+#'   PNG/JPEG), which write nothing and raise no error when the output path is
+#'   260 characters or longer.
 #' @return Invisible; called for its side effects (files written to disk).
 #' @export
 
@@ -173,6 +211,8 @@ gsave = function(title,
     h_in = h * s
   }
   
+  output_paths = final_path
+
   ggsave(final_path, 
          plot = plot, 
          width = w_in, 
@@ -187,7 +227,9 @@ gsave = function(title,
     additional_info = ensure_dir_quiet(additional_info)
     
     if(type != ".pdf"){
-      ggsave(file.path(additional_info, "plot.pdf"),
+      pdf_path = file.path(additional_info, "plot.pdf")
+      output_paths = c(output_paths, pdf_path)
+      ggsave(pdf_path,
              plot = plot, 
              width = w_in, 
              height = h_in, 
@@ -200,18 +242,25 @@ gsave = function(title,
     
     
     if(!is.null(prepared_dfs)){
+      csv_file_names = paste0("plotDF_", names(prepared_dfs), ".csv")
+      csv_paths = file.path(additional_info, csv_file_names)
+      output_paths = c(output_paths, csv_paths)
       imap(prepared_dfs, function(df, name){
         write.csv(df, file = file.path(additional_info, paste0("plotDF_", name, ".csv")),
                   row.names = F)
       })
     }
     
-    saveRDS(plot, file = file.path(additional_info, paste0("plotObject.RDS")))
+    rds_path = file.path(additional_info, "plotObject.RDS")
+    output_paths = c(output_paths, rds_path)
+    saveRDS(plot, file = rds_path)
 
     if (!is.null(plot_bundle_object)) {
+      bundle_path = file.path(additional_info, "plot_bundle_object.rds")
+      output_paths = c(output_paths, bundle_path)
       saveRDS(
         plot_bundle_object,
-        file = file.path(additional_info, "plot_bundle_object.rds")
+        file = bundle_path
       )
     }
 
@@ -235,6 +284,7 @@ gsave = function(title,
     
     if (length(readme_lines) > 0) {
       readme_path = file.path(additional_info, paste0("readme.txt"))
+      output_paths = c(output_paths, readme_path)
       print("saving your README")
       writeLines(
         paste(readme_lines, collapse = "\n\n"),
@@ -243,7 +293,9 @@ gsave = function(title,
     }
     
   }
-  
+
+  gsave_check_outputs(output_paths)
+  invisible(NULL)
 }
 
 

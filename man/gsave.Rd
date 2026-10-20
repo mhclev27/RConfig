@@ -65,3 +65,13 @@ frames in \code{dfs} as CSVs, an optional \code{plot_bundle_object} as
 \code{plot_bundle_object.rds}, and an optional \code{desc} as a readme.txt — all inside
 a subfolder named after \code{title}.
 }
+\details{
+After writing, \code{gsave()} verifies that every file it was asked to
+produce exists and is non-empty: the primary plot file, and with
+\code{additional_info = TRUE} the companion \code{plot.pdf}, \code{plotObject.RDS}, each
+\verb{plotDF_<name>.csv}, \code{plot_bundle_object.rds} and \code{readme.txt} when they
+apply. If any is missing it stops with an error listing each missing path
+and its character length. This catches Windows graphics devices (e.g. ragg
+PNG/JPEG), which write nothing and raise no error when the output path is
+260 characters or longer.
+}
